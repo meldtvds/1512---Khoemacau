@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field DPR Generator (Drilling & CPTu Engine)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 10px;
+        }
+        .card {
+            background: #ffffff;
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        h2 { text-align: center; color: #075e54; font-size: 1.2rem; margin: 0; flex-grow: 1; }
+        p.sub { text-align: center; color: #666; font-size: 0.8rem; margin-top: 0; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.85rem; color: #333; }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            background-color: #fff0f3;
+            transition: background-color 0.2s ease;
+        }
+        input:not(:placeholder-shown), select:not(:invalid):not([value=""]), textarea:not(:placeholder-shown) {
+            background-color: #ffffff;
+        }
+        select option[value=""] {
+            color: #999;
+        }
+        textarea { 
+            min-height: 50px; 
+            resize: none; 
+            overflow: hidden; 
+        }
+        .row { display: flex; gap: 8px; }
+        .row > div { flex: 1; }
+        
+        .general-section {
+            background-color: #e6fffa;
+            border: 1px solid #38b2ac;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .general-title {
+            font-weight: bold;
+            color: #234e52;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #b2f5ea;
+            padding-bottom: 5px;
+        }
+        .rig-section {
+            background-color: #f8f9fa;
+            border: 1px solid #cbd5e0;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .rig-title {
+            font-weight: bold;
+            color: #075e54;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #cbd5e0;
+            padding-bottom: 6px;
+        }
+        .sub-position {
+            background: #ffffff;
+            border: 1px solid #cbd5e0;
+            border-left: 4px solid #3182ce;
+            padding: 14px;
+            border-radius: 8px;
+            margin-top: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: none;
+        }
+        .sub-position-title {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #2b6cb0;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .conditional-box {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+        .main-btn {
+            background-color: #25d366;
+            color: white;
+            border: none;
+            padding: 14px;
+            width: 100%;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .main-btn:hover { background-color: #128c7e; }
+
+        .wa-direct-btn {
+            background-color: #128c7e;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .wa-direct-btn:hover { background-color: #075e54; }
+
+        .excel-btn {
+            background-color: #107c41;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .excel-btn:hover { background-color: #0b582e; }
+
+        .reset-btn {
+            background-color: #e53e3e;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .reset-btn:hover { background-color: #c53030; }
+        
+        #result-box {
+            margin-top: 20px;
+            background: #ecfdf5;
+            border: 1px solid #34d399;
+            padding: 12px;
+            border-radius: 6px;
+            display: none;
+        }
+        .output-area {
+            width: 100%;
+            height: 160px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: #fff;
+            padding: 8px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        .copy-action-btn {
+            background-color: #075e54;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .copy-action-btn:hover { background-color: #0b6b61; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="formContent">
+    <div class="header-container">
+        <div></div>
+        <h2>Field DPR Generator</h2>
+        <button type="button" class="reset-btn" onclick="clearDraft()">🗑️ New DPR</button>
+    </div>
+    <p class="sub">Dynamic Geotechnical Site Progress Report</p>
+
+    <form id="dprForm">
+        <div class="row">
+            <div>
+                <label>Project Code:</label>
+                <input type="text" id="project_code" placeholder="e.g. 1150" oninput="saveDraft()">
+            </div>
+            <div>
+                <label>Project Name:</label>
+                <input type="text" id="project_name" placeholder="e.g. Maseve" oninput="saveDraft()">
+            </div>
+        </div>
+
+        <label>Report Date:</label>
+        <input type="date" id="date" oninput="saveDraft()">
+
+        <label>Weather:</label>
+        <select id="weather" onchange="checkSelect(this); saveDraft()">
+            <option value="" disabled selected>-- Select Weather --</option>
+            <option value="Sunny">Sunny</option>
+            <option value="Overcast">Overcast</option>
+            <option value="Light Rain">Light Rain</option>
+            <option value="Heavy Rain">Heavy Rain</option>
+            <option value="Windy">Windy</option>
+        </select>
+
+        <!-- Problems & Safety Log -->
+        <div class="general-section" style="background-color: #fffaf0; border-color: #dd6b20;">
+            <div class="general-title" style="color: #9c4221; border-color: #feebc8;">Problems & Safety Log</div>
+            
+            <label>Problems Encountered:</label>
+            <select id="has_problems" onchange="handleToggleSelect(this, 'problems_desc_box'); saveDraft()">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+            </select>
+            <div id="problems_desc_box" class="conditional-box">
+                <label>Describe Problems Encountered:</label>
+                <textarea id="problems_text" placeholder="Detail any problems encountered..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+            </div>
+
+            <label style="margin-top: 10px;">Safety Incidents / Unsafe Acts:</label>
+            <select id="has_safety" onchange="handleToggleSelect(this, 'safety_desc_box'); saveDraft()">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+            </select>
+            <div id="safety_desc_box" class="conditional-box">
+                <label>Describe Safety Incidents / Unsafe Acts:</label>
+                <textarea id="safety_text" placeholder="Detail any safety incidents or unsafe acts..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+            </div>
+        </div>
+
+        <!-- 1. DRILLING OPERATIONS SECTION -->
+        <div class="general-section" style="background-color: #f0fdf4; border-color: #10b981;">
+            <div class="general-title" style="color: #065f46; border-color: #a7f3d0;">Drilling Operations</div>
+            <label style="font-size: 0.95rem; color: #065f46;">Was Drilling Done Today?</label>
+            <select id="was_drilling_done" onchange="toggleDrillingSection(); saveDraft()">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+            </select>
+            
+            <div id="drilling_active_container" style="display: none; margin-top: 15px;">
+                <label style="font-size: 0.95rem; color: #075e54;">How many drill rigs on-site today? (Up to 3):</label>
+                <select id="total_active_rigs" onchange="updateActiveRigsCount(); checkSelect(this); saveDraft()">
+                    <option value="1" selected>1 Drill Rig</option>
+                    <option value="2">2 Drill Rigs</option>
+                    <option value="3">3 Drill Rigs</option>
+                </select>
+
+                <div id="rigsContainer"></div>
+            </div>
+        </div>
+
+        <!-- 2. CPTu OPERATIONS SECTION -->
+        <div class="general-section" style="background-color: #eff6ff; border-color: #3b82f6;">
+            <div class="general-title" style="color: #1e40af; border-color: #bfdbfe;">CPTu Operations</div>
+            <label style="font-size: 0.95rem; color: #1e40af;">Was CPTu Done Today?</label>
+            <select id="was_cptu_done" onchange="toggleCPTuSection(); saveDraft()">
+                <option value="No" selected>No</option>
+                <option value="Yes">Yes</option>
+            </select>
+
+            <div id="cptu_active_container" style="display: none; margin-top: 15px;">
+                <!-- CPTu Daily Operating Hours -->
+                <div class="general-section" style="background-color: #f7fafc; border-color: #cbd5e0; margin-top: 10px;">
+                    <div class="general-title" style="color: #2d3748; border-color: #e2e8f0;">CPTu Daily Operating Hours</div>
+                    
+                    <label>1) Operational Time:</label>
+                    <input type="text" id="cptu_daily_op_time" placeholder="e.g. 8.0 hrs" oninput="saveDraft()">
+
+                    <label>2) Inclement Weather:</label>
+                    <input type="text" id="cptu_daily_inclement" placeholder="e.g. 0.0 hrs" oninput="handleTimeInput(this, 'cptu_inc_box', 'cptu_inc_reason'); saveDraft()">
+                    <div id="cptu_inc_box" class="conditional-box">
+                        <label>Specify Inclement Weather Details:</label>
+                        <textarea id="cptu_inc_reason" placeholder="Describe inclement weather impact..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label>3) Standing Time:</label>
+                    <input type="text" id="cptu_daily_standing" placeholder="e.g. 0.0 hrs" oninput="handleTimeInput(this, 'cptu_stand_box', 'cptu_stand_reason'); saveDraft()">
+                    <div id="cptu_stand_box" class="conditional-box">
+                        <label>Specify Standing Time Reason:</label>
+                        <textarea id="cptu_stand_reason" placeholder="Describe standing time reason..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label>4) Breakdown:</label>
+                    <input type="text" id="cptu_daily_breakdown" placeholder="e.g. 0.0 hrs" oninput="handleTimeInput(this, 'cptu_break_box', 'cptu_break_reason'); saveDraft()">
+                    <div id="cptu_break_box" class="conditional-box">
+                        <label>Specify Breakdown Reason:</label>
+                        <textarea id="cptu_break_reason" placeholder="Describe breakdown reason..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label>5) Downtime:</label>
+                    <input type="text" id="cptu_daily_downtime" placeholder="e.g. 0.0 hrs" oninput="handleTimeInput(this, 'cptu_down_box', 'cptu_down_reason'); saveDraft()">
+                    <div id="cptu_down_box" class="conditional-box">
+                        <label>Specify Downtime Reason:</label>
+                        <textarea id="cptu_down_reason" placeholder="Describe downtime reason..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+                </div>
+
+                <!-- MOSTAP Sampling Section -->
+                <div class="general-section" style="background-color: #f7fafc; border-color: #cbd5e0; margin-top: 15px;">
+                    <div class="general-title" style="color: #2d3748; border-color: #e2e8f0;">MOSTAP Sampling</div>
+                    <label>MOSTAP Sampling Performed?:</label>
+                    <select id="mostap_performed" onchange="handleToggleSelect(this, 'mostap_details_box'); saveDraft()">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+
+                    <div id="mostap_details_box" class="conditional-box">
+                        <label>At what Position / Location:</label>
+                        <input type="text" id="mostap_position" placeholder="e.g. CPT-01" oninput="saveDraft()">
+
+                        <label>How many samples were taken?:</label>
+                        <input type="number" id="mostap_count" min="1" max="10" placeholder="e.g. 2" oninput="renderMostapSamples(); saveDraft()">
+
+                        <div id="mostap_samples_container"></div>
+                    </div>
+                </div>
+
+                <label style="margin-top: 15px; font-size: 0.95rem; color: #1e40af;">How many CPTu rigs on-site today? (Up to 3):</label>
+                <select id="total_active_cptu_rigs" onchange="updateActiveCPTuRigsCount(); checkSelect(this); saveDraft()">
+                    <option value="1" selected>1 CPTu Rig</option>
+                    <option value="2">2 CPTu Rigs</option>
+                    <option value="3">3 CPTu Rigs</option>
+                </select>
+
+                <div id="cptuRigsContainer"></div>
+            </div>
+        </div>
+
+        <!-- General Site Comments -->
+        <div class="general-section" style="background-color: #f7fafc; border-color: #cbd5e0; margin-top: 25px;">
+            <div class="general-title" style="color: #2d3748; border-color: #e2e8f0;">Additional Comments / General Notes</div>
+            <textarea id="general_comments" placeholder="Write any extra details, remarks, or notes that didn't fit elsewhere..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+        </div>
+
+        <button type="button" class="main-btn" onclick="generateReport()">⚡ Generate Report for WhatsApp</button>
+        <button type="button" class="excel-btn" onclick="downloadExcel()">📊 Download Professional Multi-Tab Excel (.xlsx)</button>
+    </form>
+
+    <div id="result-box">
+        <label style="margin-top:0; color:#065f46;">Report Generated Successfully:</label>
+        <textarea id="finalOutput" class="output-area" readonly></textarea>
+        <button type="button" class="copy-action-btn" onclick="copyToClipboard()">📋 Tap Here to Copy Text</button>
+        <button type="button" class="wa-direct-btn" onclick="openWhatsAppDirect()">🚀 Open WhatsApp with Message</button>
+    </div>
+</div>
+
+<script>
+    const siteConfig = {
+        drillSizes: ["NWD4", "TNW", "HQ", "HQ3", "Sonic", "Other"],
+        cptuTermReasons: [
+            "Target Depth Reached", "Client Termination", "Rig Limitation", 
+            "qc>50MPa", "fs>1600kPa", "u2>2500kPa", "Tilt Limitation", "Other"
+        ]
+    };
+
+    function autoResizeTextarea(el) {
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight + 6) + 'px';
+    }
+
+    function formatNumberInput(el) {}
+
+    function toggleDrillingSection() {
+        const val = document.getElementById('was_drilling_done').value;
+        const container = document.getElementById('drilling_active_container');
+        if (val === 'Yes') {
+            container.style.display = 'block';
+            buildAllRigsHTML();
+            updateActiveRigsCount();
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function toggleCPTuSection() {
+        const val = document.getElementById('was_cptu_done').value;
+        const container = document.getElementById('cptu_active_container');
+        if (val === 'Yes') {
+            container.style.display = 'block';
+            buildAllCPTuRigsHTML();
+            updateActiveCPTuRigsCount();
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function renderMostapSamples() {
+        const count = parseInt(document.getElementById('mostap_count').value) || 0;
+        const container = document.getElementById('mostap_samples_container');
+        let html = '';
+
+        for (let i = 1; i <= count; i++) {
+            html += `
+            <div style="background: #fff; border: 1px solid #cbd5e0; padding: 10px; border-radius: 6px; margin-top: 10px;">
+                <div style="font-weight: bold; color: #2b6cb0; font-size: 0.85rem; margin-bottom: 6px;">Sample #${i}</div>
+                
+                <label>Sample ID:</label>
+                <input type="text" id="mostap_sample_id_${i}" placeholder="e.g. MS-01" oninput="saveDraft()">
+
+                <label>Sample Diameter:</label>
+                <select id="mostap_sample_dia_${i}" onchange="checkSelect(this); saveDraft()">
+                    <option value="" disabled selected>-- Select Diameter --</option>
+                    <option value="65mm">65mm</option>
+                    <option value="35mm">35mm</option>
+                </select>
+
+                <div class="row">
+                    <div>
+                        <label>Weight Empty (kg):</label>
+                        <input type="number" step="0.01" id="mostap_weight_empty_${i}" placeholder="0.00" oninput="saveDraft()">
+                    </div>
+                    <div>
+                        <label>Weight Full (kg):</label>
+                        <input type="number" step="0.01" id="mostap_weight_full_${i}" placeholder="0.00" oninput="saveDraft()">
+                    </div>
+                </div>
+
+                <label>Length Recovered (m):</label>
+                <input type="number" step="0.01" id="mostap_length_recovered_${i}" placeholder="0.00" oninput="saveDraft()">
+            </div>`;
+        }
+        container.innerHTML = html;
+        saveDraft();
+    }
+
+    function buildAllRigsHTML() {
+        const container = document.getElementById('rigsContainer');
+        if (container.innerHTML.trim() !== "") return;
+        let html = '';
+
+        for (let r = 1; r <= 3; r++) {
+            let rigId = `rig${r}`;
+            let drillSizeOptionsHTML = `<option value="" disabled selected>-- Select Drill Size --</option>`;
+            siteConfig.drillSizes.forEach(size => {
+                drillSizeOptionsHTML += `<option value="${size}">${size}</option>`;
+            });
+
+            let positionsHTML = '';
+            for (let p = 1; p <= 3; p++) {
+                let displayStyle = (p === 1) ? 'block' : 'none';
+                positionsHTML += `
+                <div id="${rigId}_p${p}_box" class="sub-position" style="display:${displayStyle};">
+                    <div class="sub-position-title">Position ${p}</div>
+                    
+                    <div class="row">
+                        <div>
+                            <label>Position ID:</label>
+                            <input type="text" id="${rigId}_pos${p}" placeholder="e.g. BH-0${p}" oninput="saveDraft()">
+                        </div>
+                        <div>
+                            <label>Status:</label>
+                            <select id="${rigId}_status${p}" onchange="toggleConcreteBox('${rigId}', ${p}); checkSelect(this); saveDraft()">
+                                <option value="" disabled selected>-- Select Status --</option>
+                                <option value="Incomplete">Incomplete</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div>
+                            <label>Drill Size:</label>
+                            <select id="${rigId}_drillsize${p}" onchange="toggleOtherDrillSize('${rigId}', ${p}); checkSelect(this); saveDraft()">
+                                ${drillSizeOptionsHTML}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Start Date:</label>
+                            <input type="date" id="${rigId}_startdate${p}" oninput="saveDraft()">
+                        </div>
+                    </div>
+
+                    <div id="${rigId}_other_drill_box${p}" class="conditional-box">
+                        <label>Specify Other Drill Size:</label>
+                        <input type="text" id="${rigId}_other_drill${p}" placeholder="Enter drill size..." oninput="saveDraft()">
+                    </div>
+
+                    <label>Target Field Depth (m):</label>
+                    <input type="number" step="0.01" id="${rigId}_target${p}" placeholder="0.00" oninput="formatNumberInput(this); saveDraft()">
+
+                    <div class="row">
+                        <div>
+                            <label>Depth From (m):</label>
+                            <input type="number" step="0.01" id="${rigId}_from${p}" placeholder="0.00" oninput="formatNumberInput(this); saveDraft()">
+                        </div>
+                        <div>
+                            <label>Depth To (m):</label>
+                            <input type="number" step="0.01" id="${rigId}_to${p}" placeholder="0.00" oninput="formatNumberInput(this); saveDraft()">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div>
+                            <label>Water Level Time:</label>
+                            <input type="time" id="${rigId}_watertime${p}" oninput="saveDraft()">
+                        </div>
+                        <div>
+                            <label>Water Level Depth (m):</label>
+                            <input type="number" step="0.01" id="${rigId}_waterdepth${p}" placeholder="e.g. 2.40 or Dry" oninput="formatNumberInput(this); saveDraft()">
+                        </div>
+                    </div>
+
+                    <label>Was Piezo Installed?</label>
+                    <select id="${rigId}_piezo${p}" onchange="togglePiezo('${rigId}', ${p}); checkSelect(this); saveDraft()">
+                        <option value="" disabled selected>-- Select --</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                    <div id="${rigId}_piezo_depth_box${p}" class="conditional-box">
+                        <label>Piezometer Installation Depth (m):</label>
+                        <input type="number" step="0.01" id="${rigId}_piezo_depth${p}" placeholder="e.g. 15.00" oninput="formatNumberInput(this); saveDraft()">
+                    </div>
+
+                    <label style="margin-top: 10px;">Amount of Core Boxes:</label>
+                    <input type="number" step="1" id="${rigId}_coreboxes${p}" placeholder="0" oninput="saveDraft()">
+
+                    <div id="${rigId}_concrete_box_div${p}" class="conditional-box">
+                        <label>Was a Concrete Block Made?</label>
+                        <select id="${rigId}_concrete${p}" onchange="checkSelect(this); saveDraft()">
+                            <option value="" disabled selected>-- Select --</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+
+                    <label style="margin-top:10px;">Position Comments / Notes:</label>
+                    <textarea id="${rigId}_pos_comment${p}" placeholder="Any specific observations for this position..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                </div>`;
+            }
+
+            html += `
+            <div class="rig-section" id="${rigId}_section" style="display: ${r === 1 ? 'block' : 'none'};">
+                <div class="rig-title">Drill Rig ${r}</div>
+                
+                <div class="row">
+                    <div>
+                        <label>Rig Number:</label>
+                        <input type="text" id="${rigId}_rignumber" placeholder="e.g. Rig-0${r}" oninput="saveDraft()">
+                    </div>
+                    <div>
+                        <label>Rig Operator:</label>
+                        <input type="text" id="${rigId}_operator" placeholder="Operator Name" oninput="saveDraft()">
+                    </div>
+                </div>
+
+                <div class="general-section" style="background-color: #ebf8ff; border-color: #3182ce; margin-top: 15px;">
+                    <div class="general-title" style="color: #2b6cb0; border-color: #bee3f8;">Rig ${r} - Daily Operating Hours</div>
+                    
+                    <label>1) Operational Time (Hours):</label>
+                    <input type="number" step="0.01" id="${rigId}_op_time" placeholder="e.g. 8.00" oninput="formatNumberInput(this); saveDraft()">
+
+                    <label style="margin-top: 10px;">2) Inclement Weather:</label>
+                    <select id="${rigId}_has_inclement" onchange="handleRigToggleSelect('${rigId}', 'inclement', 'inclement_desc_box'); saveDraft()">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                    <div id="${rigId}_inclement_desc_box" class="conditional-box">
+                        <label>Inclement Weather Time (Hours) & Details:</label>
+                        <input type="number" step="0.01" id="${rigId}_inclement_hours" placeholder="Hours lost e.g. 1.50" style="margin-bottom: 6px;" oninput="formatNumberInput(this); saveDraft()">
+                        <textarea id="${rigId}_inclement_text" placeholder="Describe inclement weather impact..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label style="margin-top: 10px;">3) Standing Time:</label>
+                    <select id="${rigId}_has_standing" onchange="handleRigToggleSelect('${rigId}', 'standing', 'standing_desc_box'); saveDraft()">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                    <div id="${rigId}_standing_desc_box" class="conditional-box">
+                        <label>Standing Time (Hours) & Details:</label>
+                        <input type="number" step="0.01" id="${rigId}_standing_hours" placeholder="Hours lost e.g. 2.00" style="margin-bottom: 6px;" oninput="formatNumberInput(this); saveDraft()">
+                        <textarea id="${rigId}_standing_text" placeholder="Describe reason for standing time..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label style="margin-top: 10px;">4) Breakdown:</label>
+                    <select id="${rigId}_has_breakdown" onchange="handleRigToggleSelect('${rigId}', 'breakdown', 'breakdown_desc_box'); saveDraft()">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                    <div id="${rigId}_breakdown_desc_box" class="conditional-box">
+                        <label>Breakdown Time (Hours) & Details:</label>
+                        <input type="number" step="0.01" id="${rigId}_breakdown_hours" placeholder="Hours lost e.g. 1.00" style="margin-bottom: 6px;" oninput="formatNumberInput(this); saveDraft()">
+                        <textarea id="${rigId}_breakdown_text" placeholder="Describe equipment breakdown..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+
+                    <label style="margin-top: 10px;">5) Downtime:</label>
+                    <select id="${rigId}_has_downtime" onchange="handleRigToggleSelect('${rigId}', 'downtime', 'downtime_desc_box'); saveDraft()">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                    <div id="${rigId}_downtime_desc_box" class="conditional-box">
+                        <label>Downtime (Hours) & Details:</label>
+                        <input type="number" step="0.01" id="${rigId}_downtime_hours" placeholder="Hours lost e.g. 0.50" style="margin-bottom: 6px;" oninput="formatNumberInput(this); saveDraft()">
+                        <textarea id="${rigId}_downtime_text" placeholder="Describe general downtime reasons..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                    </div>
+                </div>
+
+                <label style="margin-top: 12px;">Positions Worked Today:</label>
+                <select id="${rigId}_num_pos" onchange="togglePositions('${rigId}'); checkSelect(this); saveDraft()">
+                    <option value="1" selected>1 Position</option>
+                    <option value="2">2 Positions</option>
+                    <option value="3">3 Positions</option>
+                </select>
+
+                ${positionsHTML}
+
+                <div style="margin-top: 15px; border-top: 1px dashed #cbd5e0; padding-top: 10px;">
+                    <label>Operations Done Today:</label>
+                    <textarea id="${rigId}_done" placeholder="Summary of operations completed today for this rig..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+
+                    <label style="margin-top: 10px;">Plan for Next 24 Hours:</label>
+                    <textarea id="${rigId}_next" placeholder="Plan for the next 24 hours for this rig..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function buildAllCPTuRigsHTML() {
+        const container = document.getElementById('cptuRigsContainer');
+        if (container.innerHTML.trim() !== "") return;
+        let html = '';
+
+        let termOptionsHTML = `<option value="" disabled selected>-- Select Reason --</option>`;
+        siteConfig.cptuTermReasons.forEach(reason => {
+            termOptionsHTML += `<option value="${reason}">${reason}</option>`;
+        });
+
+        for (let r = 1; r <= 3; r++) {
+            let rigId = `cptu_rig${r}`;
+            let positionsHTML = '';
+            for (let p = 1; p <= 5; p++) {
+                let displayStyle = (p === 1) ? 'block' : 'none';
+                let defaultPrev = (p === 1) ? "0" : "";
+                positionsHTML += `
+                <div id="${rigId}_p${p}_box" class="sub-position" style="display:${displayStyle};">
+                    <div class="sub-position-title">Position ${p}</div>
+                    <label>Position ID:</label>
+                    <input type="text" id="${rigId}_pos${p}" placeholder="e.g. CPT-0${p}" oninput="saveDraft()">
+                    
+                    <label>Date Started:</label>
+                    <input type="date" id="${rigId}_date_started${p}" oninput="saveDraft()">
+
+                    <label>Test Type:</label>
+                    <select id="${rigId}_testtype${p}" onchange="checkSelect(this); saveDraft()">
+                        <option value="" disabled selected>-- Select Test Type --</option>
+                        <option value="CPTu">CPTu</option>
+                        <option value="S-CPTu">S-CPTu</option>
+                    </select>
+
+                    <label>Probe Serial Number:</label>
+                    <input type="text" id="${rigId}_probeserial${p}" placeholder="e.g. SN-1234" oninput="saveDraft()">
+
+                    <div class="row">
+                        <div>
+                            <label>Filter Type:</label>
+                            <select id="${rigId}_filtertype${p}" onchange="checkSelect(this); saveDraft()">
+                                <option value="" disabled selected>-- Select Filter --</option>
+                                <option value="Slot Filter">Slot Filter</option>
+                                <option value="Brass Porous Filter">Brass Porous Filter</option>
+                                <option value="HDPR porous filter">HDPR porous filter</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Saturation Medium:</label>
+                            <select id="${rigId}_satmedium${p}" onchange="checkSelect(this); saveDraft()">
+                                <option value="" disabled selected>-- Select Medium --</option>
+                                <option value="Silicone Grease">Silicone Grease</option>
+                                <option value="Silicone oil">Silicone oil</option>
+                                <option value="Glycerine">Glycerine</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label>Target Depth (m):</label>
+                    <input type="number" step="0.1" id="${rigId}_target${p}" placeholder="0.0" oninput="saveDraft()">
+
+                    <div class="row">
+                        <div>
+                            <label>Prev Depth (m):</label>
+                            <input type="number" step="0.1" id="${rigId}_prev${p}" value="${defaultPrev}" placeholder="0.0" oninput="saveDraft()">
+                        </div>
+                        <div>
+                            <label>Curr Depth (m):</label>
+                            <input type="number" step="0.1" id="${rigId}_curr${p}" placeholder="0.0" oninput="saveDraft()">
+                        </div>
+                    </div>
+
+                    <label>Dissipation Duration (min):</label>
+                    <input type="number" step="1" id="${rigId}_dissipation${p}" placeholder="0" oninput="saveDraft()">
+
+                    <label>Status:</label>
+                    <select id="${rigId}_status${p}" onchange="checkSelect(this); toggleCPTuTermReason('${rigId}', ${p}); saveDraft()">
+                        <option value="" disabled selected>-- Select Status --</option>
+                        <option value="Incomplete">Incomplete</option>
+                        <option value="Complete">Complete</option>
+                        <option value="Terminated">Terminated</option>
+                    </select>
+                    <div id="${rigId}_term_box${p}" style="display:none; margin-top:8px;">
+                        <label>Reason for Completion / Termination:</label>
+                        <select id="${rigId}_term_reason${p}" onchange="checkSelect(this); toggleCPTuOtherTermReason('${rigId}', ${p}); saveDraft()">
+                            ${termOptionsHTML}
+                        </select>
+                        <div id="${rigId}_other_term_box${p}" class="conditional-box" style="display:none; margin-top:6px;">
+                            <label>Specify Other Termination Reason:</label>
+                            <textarea id="${rigId}_other_term_text${p}" placeholder="Explain other termination reason..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                        </div>
+                    </div>
+
+                    <label style="margin-top:10px;">Position Comments / Notes:</label>
+                    <textarea id="${rigId}_pos_comment${p}" placeholder="Any specific notes or observations for this position..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+                </div>`;
+            }
+
+            html += `
+            <div class="rig-section" id="${rigId}_section" style="display: ${r === 1 ? 'block' : 'none'};">
+                <div class="rig-title">CPTu Rig ${r} Configuration</div>
+                
+                <div class="row">
+                    <div>
+                        <label>Rig Name / ID:</label>
+                        <input type="text" id="${rigId}_name" placeholder="e.g. TG63-150" oninput="saveDraft()">
+                    </div>
+                    <div>
+                        <label>Operator Name:</label>
+                        <input type="text" id="${rigId}_operator" placeholder="e.g. John Doe" oninput="saveDraft()">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div>
+                        <label>Start Time:</label>
+                        <input type="time" id="${rigId}_start_time" value="07:00" oninput="saveDraft()">
+                    </div>
+                    <div>
+                        <label>Stop Time:</label>
+                        <input type="time" id="${rigId}_stop_time" value="17:00" oninput="saveDraft()">
+                    </div>
+                </div>
+
+                <label>Positions Worked Today:</label>
+                <select id="${rigId}_num_pos" onchange="toggleCPTuPositions('${rigId}'); checkSelect(this); saveDraft()">
+                    <option value="1" selected>1 Position</option>
+                    <option value="2">2 Positions</option>
+                    <option value="3">3 Positions</option>
+                    <option value="4">4 Positions</option>
+                    <option value="5">5 Positions</option>
+                </select>
+
+                ${positionsHTML}
+
+                <label style="margin-top:15px;">Operations Done Today:</label>
+                <textarea id="${rigId}_done" placeholder="Brief summary of work..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+
+                <label>Plan for Next 24 Hours:</label>
+                <textarea id="${rigId}_next" placeholder="Tomorrow's plan..." oninput="autoResizeTextarea(this); saveDraft()"></textarea>
+            </div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function updateActiveRigsCount() {
+        const activeCount = parseInt(document.getElementById('total_active_rigs').value) || 1;
+        for (let r = 1; r <= 3; r++) {
+            const section = document.getElementById(`rig${r}_section`);
+            if (section) {
+                section.style.display = (r <= activeCount) ? 'block' : 'none';
+            }
+        }
+    }
+
+    function updateActiveCPTuRigsCount() {
+        const activeCount = parseInt(document.getElementById('total_active_cptu_rigs').value) || 1;
+        for (let r = 1; r <= 3; r++) {
+            const section = document.getElementById(`cptu_rig${r}_section`);
+            if (section) {
+                section.style.display = (r <= activeCount) ? 'block' : 'none';
+            }
+        }
+    }
+
+    function checkSelect(selectElement) {
+        if (selectElement.value !== "") {
+            selectElement.style.color = "#333";
+        }
+    }
+
+    function togglePositions(rigPrefix) {
+        const num = parseInt(document.getElementById(rigPrefix + '_num_pos').value) || 1;
+        for (let p = 1; p <= 3; p++) {
+            const box = document.getElementById(rigPrefix + '_p' + p + '_box');
+            if (box) {
+                box.style.display = (p <= num) ? 'block' : 'none';
+            }
+        }
+    }
+
+    function toggleCPTuPositions(rigPrefix) {
+        const num = parseInt(document.getElementById(rigPrefix + '_num_pos').value) || 1;
+        for (let p = 1; p <= 5; p++) {
+            const box = document.getElementById(rigPrefix + '_p' + p + '_box');
+            if (box) {
+                box.style.display = (p <= num) ? 'block' : 'none';
+            }
+        }
+    }
+
+    function toggleOtherDrillSize(rigPrefix, posIndex) {
+        const val = document.getElementById(rigPrefix + '_drillsize' + posIndex).value;
+        const box = document.getElementById(rigPrefix + '_other_drill_box' + posIndex);
+        if (val === 'Other') {
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+            document.getElementById(rigPrefix + '_other_drill' + posIndex).value = '';
+        }
+    }
+
+    function togglePiezo(rigPrefix, posIndex) {
+        const val = document.getElementById(rigPrefix + '_piezo' + posIndex).value;
+        const box = document.getElementById(rigPrefix + '_piezo_depth_box' + posIndex);
+        if (val === 'Yes') {
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+            document.getElementById(rigPrefix + '_piezo_depth' + posIndex).value = '';
+        }
+    }
+
+    function toggleConcreteBox(rigPrefix, posIndex) {
+        const status = document.getElementById(rigPrefix + '_status' + posIndex).value;
+        const box = document.getElementById(rigPrefix + '_concrete_box_div' + posIndex);
+        const concreteSelect = document.getElementById(rigPrefix + '_concrete' + posIndex);
+        if (status === 'Complete') {
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+            concreteSelect.value = '';
+            concreteSelect.style.color = '#999';
+        }
+    }
+
+    function toggleCPTuTermReason(rigPrefix, posIndex) {
+        const status = document.getElementById(rigPrefix + '_status' + posIndex).value;
+        const termBox = document.getElementById(rigPrefix + '_term_box' + posIndex);
+        const termSelect = document.getElementById(rigPrefix + '_term_reason' + posIndex);
+
+        if (status === 'Complete' || status === 'Terminated') {
+            termBox.style.display = 'block';
+        } else {
+            termBox.style.display = 'none';
+            termSelect.value = ""; 
+            termSelect.style.color = "#999";
+            document.getElementById(rigPrefix + '_other_term_box' + posIndex).style.display = 'none';
+            document.getElementById(rigPrefix + '_other_term_text' + posIndex).value = '';
+        }
+    }
+
+    function toggleCPTuOtherTermReason(rigPrefix, posIndex) {
+        const termSelect = document.getElementById(rigPrefix + '_term_reason' + posIndex);
+        const otherBox = document.getElementById(rigPrefix + '_other_term_box' + posIndex);
+        const otherText = document.getElementById(rigPrefix + '_other_term_text' + posIndex);
+
+        if (termSelect.value === 'Other') {
+            otherBox.style.display = 'block';
+            autoResizeTextarea(otherText);
+        } else {
+            otherBox.style.display = 'none';
+            otherText.value = '';
+        }
+    }
+
+    function handleToggleSelect(selectElement, boxId) {
+        const val = selectElement.value;
+        const box = document.getElementById(boxId);
+        if (val === 'Yes') {
+            box.style.display = 'block';
+            const textarea = box.querySelector('textarea');
+            if (textarea) autoResizeTextarea(textarea);
+        } else {
+            box.style.display = 'none';
+            const textarea = box.querySelector('textarea');
+            if (textarea) {
+                textarea.value = "";
+                autoResizeTextarea(textarea);
+            }
+        }
+    }
+
+    function handleTimeInput(inputElement, boxId, reasonId) {
+        const val = inputElement.value.trim();
+        const box = document.getElementById(boxId);
+        const textarea = document.getElementById(reasonId);
+
+        if (val !== "" && val !== "0" && val !== "0.0") {
+            box.style.display = 'block';
+            autoResizeTextarea(textarea);
+        } else {
+            box.style.display = 'none';
+            textarea.value = "";
+            autoResizeTextarea(textarea);
+        }
+    }
+
+    function handleRigToggleSelect(rigId, type, boxId) {
+        const selectElem = document.getElementById(`${rigId}_has_${type}`);
+        const box = document.getElementById(`${rigId}_${boxId}`);
+        if (selectElem.value === 'Yes') {
+            box.style.display = 'block';
+            const textarea = box.querySelector('textarea');
+            if (textarea) autoResizeTextarea(textarea);
+        } else {
+            box.style.display = 'none';
+            const hoursInput = box.querySelector('input[type="number"]');
+            if (hoursInput) hoursInput.value = "";
+            const textarea = box.querySelector('textarea');
+            if (textarea) {
+                textarea.value = "";
+                autoResizeTextarea(textarea);
+            }
+        }
+    }
+
+    function saveDraft() {
+        const inputs = document.querySelectorAll('input, select, textarea');
+        const formData = {};
+        inputs.forEach(input => {
+            if (input.id && input.id !== 'finalOutput') {
+                formData[input.id] = input.value;
+            }
+        });
+        localStorage.setItem('field_dpr_unified_draft', JSON.stringify(formData));
+    }
+
+    function loadDraft() {
+        const saved = localStorage.getItem('field_dpr_unified_draft');
+        if (!saved) {
+            saveDraft();
+            return;
+        }
+        try {
+            const formData = JSON.parse(saved);
+            for (const [id, value] of Object.entries(formData)) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = value;
+                    if (el.tagName === 'SELECT' && value !== "") {
+                        el.style.color = "#333";
+                    }
+                }
+            }
+            
+            toggleDrillingSection();
+            toggleCPTuSection();
+
+            if (document.getElementById('was_drilling_done').value === 'Yes') {
+                updateActiveRigsCount();
+                for (let r = 1; r <= 3; r++) {
+                    let rigPrefix = `rig${r}`;
+                    togglePositions(rigPrefix);
+                    const num = parseInt(document.getElementById(rigPrefix + '_num_pos').value) || 1;
+                    for (let i = 1; i <= num; i++) {
+                        toggleOtherDrillSize(rigPrefix, i);
+                        togglePiezo(rigPrefix, i);
+                        toggleConcreteBox(rigPrefix, i);
+                    }
+                    handleRigToggleSelect(rigPrefix, 'inclement', 'inclement_desc_box');
+                    handleRigToggleSelect(rigPrefix, 'standing', 'standing_desc_box');
+                    handleRigToggleSelect(rigPrefix, 'breakdown', 'breakdown_desc_box');
+                    handleRigToggleSelect(rigPrefix, 'downtime', 'downtime_desc_box');
+                }
+            }
+
+            if (document.getElementById('was_cptu_done').value === 'Yes') {
+                updateActiveCPTuRigsCount();
+                if (formData['mostap_count']) {
+                    document.getElementById('mostap_count').value = formData['mostap_count'];
+                    renderMostapSamples();
+                }
+                for (let r = 1; r <= 3; r++) {
+                    let rigPrefix = `cptu_rig${r}`;
+                    toggleCPTuPositions(rigPrefix);
+                    for (let i = 1; i <= 5; i++) {
+                        toggleCPTuTermReason(rigPrefix, i);
+                        toggleCPTuOtherTermReason(rigPrefix, i);
+                    }
+                }
+                handleTimeInput(document.getElementById('cptu_daily_inclement'), 'cptu_inc_box', 'cptu_inc_reason');
+                handleTimeInput(document.getElementById('cptu_daily_standing'), 'cptu_stand_box', 'cptu_stand_reason');
+                handleTimeInput(document.getElementById('cptu_daily_breakdown'), 'cptu_break_box', 'cptu_break_reason');
+                handleTimeInput(document.getElementById('cptu_daily_downtime'), 'cptu_down_box', 'cptu_down_reason');
+                handleToggleSelect(document.getElementById('mostap_performed'), 'mostap_details_box');
+            }
+
+            handleToggleSelect(document.getElementById('has_problems'), 'problems_desc_box');
+            handleToggleSelect(document.getElementById('has_safety'), 'safety_desc_box');
+
+            document.querySelectorAll('textarea').forEach(ta => {
+                if (ta.value.trim() !== "") {
+                    autoResizeTextarea(ta);
+                }
+            });
+        } catch (e) {
+            console.error("Error loading draft", e);
+            localStorage.removeItem('field_dpr_unified_draft');
+        }
+    }
+
+    function clearDraft() {
+        if (confirm("Are you sure you want to clear all entered data and start a new DPR?")) {
+            localStorage.removeItem('field_dpr_unified_draft');
+            document.getElementById('dprForm').reset();
+            document.getElementById('rigsContainer').innerHTML = '';
+            document.getElementById('cptuRigsContainer').innerHTML = '';
+            document.getElementById('mostap_samples_container').innerHTML = '';
+            toggleDrillingSection();
+            toggleCPTuSection();
+            document.querySelectorAll('.conditional-box').forEach(box => box.style.display = 'none');
+            document.getElementById('result-box').style.display = 'none';
+            saveDraft();
+        }
+    }
+
+    function formatVal(val) {
+        if (val === "" || isNaN(val)) return val;
+        return parseFloat(val).toFixed(2);
+    }
+
+    function formatRig(rigId, defaultName) {
+        const rigName = document.getElementById(rigId + '_rignumber').value || defaultName;
+        const operator = document.getElementById(rigId + '_operator').value || "-";
+        
+        const opTime = formatVal(document.getElementById(rigId + '_op_time').value) || "0.00";
+        const hasInclement = document.getElementById(rigId + '_has_inclement').value;
+        const inclementHrs = formatVal(document.getElementById(rigId + '_inclement_hours').value) || "0.00";
+        const inclementText = document.getElementById(rigId + '_inclement_text').value || "None";
+
+        const hasStanding = document.getElementById(rigId + '_has_standing').value;
+        const standingHrs = formatVal(document.getElementById(rigId + '_standing_hours').value) || "0.00";
+        const standingText = document.getElementById(rigId + '_standing_text').value || "None";
+
+        const hasBreakdown = document.getElementById(rigId + '_has_breakdown').value;
+        const breakdownHrs = formatVal(document.getElementById(rigId + '_breakdown_hours').value) || "0.00";
+        const breakdownText = document.getElementById(rigId + '_breakdown_text').value || "None";
+
+        const hasDowntime = document.getElementById(rigId + '_has_downtime').value;
+        const downtimeHrs = formatVal(document.getElementById(rigId + '_downtime_hours').value) || "0.00";
+        const downtimeText = document.getElementById(rigId + '_downtime_text').value || "None";
+
+        const numPos = parseInt(document.getElementById(rigId + '_num_pos').value) || 1;
+        const operationsDone = document.getElementById(rigId + '_done').value || "-";
+        const nextPlan = document.getElementById(rigId + '_next').value || "-";
+
+        let text = `🔸 *${rigName}* (Operator: ${operator})\n`;
+        text += `   ⏱️ *Operating Hours:* Op: ${opTime} hrs | Inclement: ${hasInclement === 'Yes' ? `${inclementHrs} hrs (${inclementText})` : 'No'} | Standing: ${hasStanding === 'Yes' ? `${standingHrs} hrs (${standingText})` : 'No'} | Breakdown: ${hasBreakdown === 'Yes' ? `${breakdownHrs} hrs (${breakdownText})` : 'No'} | Downtime: ${hasDowntime === 'Yes' ? `${downtimeHrs} hrs (${downtimeText})` : 'No'}\n`;
+
+        for (let i = 1; i <= numPos; i++) {
+            const posID = document.getElementById(rigId + '_pos' + i).value || `-`;
+            const status = document.getElementById(rigId + '_status' + i).value || `-`;
+            
+            let drillSize = document.getElementById(rigId + '_drillsize' + i).value || `-`;
+            if (drillSize === 'Other') {
+                const otherSize = document.getElementById(rigId + '_other_drill' + i).value || 'Other';
+                drillSize = `Other (${otherSize})`;
+            }
+
+            const startDate = document.getElementById(rigId + '_startdate' + i).value || `-`;
+            const target = formatVal(document.getElementById(rigId + '_target' + i).value) || `-`;
+            const dFrom = formatVal(document.getElementById(rigId + '_from' + i).value) || `-`;
+            const dTo = formatVal(document.getElementById(rigId + '_to' + i).value) || `-`;
+            let adv = "-";
+            if (dFrom !== "-" && dTo !== "-") {
+                adv = (parseFloat(dTo) - parseFloat(dFrom)).toFixed(2);
+            }
+            const waterTime = document.getElementById(rigId + '_watertime' + i).value || "-";
+            const waterDepth = formatVal(document.getElementById(rigId + '_waterdepth' + i).value) || "-";
+            const piezo = document.getElementById(rigId + '_piezo' + i).value || `No`;
+            let piezoText = piezo;
+            if (piezo === 'Yes') {
+                const pDepth = formatVal(document.getElementById(rigId + '_piezo_depth' + i).value) || `-`;
+                piezoText += ` (Depth: ${pDepth}m)`;
+            }
+            const coreBoxes = document.getElementById(rigId + '_coreboxes' + i).value || `0`;
+            let concreteText = "-";
+            if (status === 'Complete') {
+                concreteText = document.getElementById(rigId + '_concrete' + i).value || `-`;
+            }
+            const comment = document.getElementById(rigId + '_pos_comment' + i).value || "";
+
+            text += `   👉 *Position:* ${posID} (Status: *${status}*) | ${drillSize}\n`;
+            text += `      • Start Date: ${startDate}\n`;
+            text += `      • Depth From: ${dFrom}m -> To: ${dTo}m (Advance: ${adv}m / Target: ${target}m)\n`;
+            text += `      • Water Level: Time: ${waterTime} | Depth: ${waterDepth}m\n`;
+            text += `      • Was Piezo Installed: ${piezoText}\n`;
+            text += `      • Core Boxes: ${coreBoxes} ${status === 'Complete' ? '| Was Concrete Block Made: ' + concreteText : ''}\n`;
+            if (comment) {
+                text += `      • Notes: ${comment}\n`;
+            }
+        }
+        text += `   ✔️ *Operations Done Today:* ${operationsDone}\n`;
+        text += `   🔜 *Plan for Next 24 Hours:* ${nextPlan}\n`;
+        return text;
+    }
+
+    function formatCPTuRig(rigId, defaultName) {
+        const rigName = document.getElementById(rigId + '_name').value.trim() || defaultName;
+        const operator = document.getElementById(rigId + '_operator').value.trim() || "-";
+        const startTime = document.getElementById(rigId + '_start_time').value || "-";
+        const stopTime = document.getElementById(rigId + '_stop_time').value || "-";
+        const numPos = parseInt(document.getElementById(rigId + '_num_pos').value) || 1;
+        const done = document.getElementById(rigId + '_done').value.trim() || "-";
+        const next = document.getElementById(rigId + '_next').value.trim() || "-";
+
+        let text = `🔸 *CPTu Rig: ${rigName}* (Operator: ${operator})\n`;
+        text += `   ⏰ *Hours:* ${startTime} -> ${stopTime}\n`;
+
+        for (let i = 1; i <= numPos; i++) {
+            const pos = document.getElementById(rigId + '_pos' + i).value.trim() || "-";
+            const dateStarted = document.getElementById(rigId + '_date_started' + i).value || "-";
+            const testType = document.getElementById(rigId + '_testtype' + i).value || "-";
+            const probeSerial = document.getElementById(rigId + '_probeserial' + i).value.trim() || "-";
+            const filterType = document.getElementById(rigId + '_filtertype' + i).value || "-";
+            const satMedium = document.getElementById(rigId + '_satmedium' + i).value || "-";
+            const target = document.getElementById(rigId + '_target' + i).value.trim() || "-";
+            const prev = document.getElementById(rigId + '_prev' + i).value.trim() || "-";
+            const curr = document.getElementById(rigId + '_curr' + i).value.trim() || "-";
+            const dissipation = document.getElementById(rigId + '_dissipation' + i).value.trim() || "-";
+            const status = document.getElementById(rigId + '_status' + i).value || "-";
+            const comment = document.getElementById(rigId + '_pos_comment' + i).value.trim();
+
+            let adv = "-";
+            if (prev !== "-" && curr !== "-") {
+                adv = (parseFloat(curr) - parseFloat(prev)).toFixed(1) + "m";
+            }
+
+            let termReasonText = "";
+            if (status === "Complete" || status === "Terminated") {
+                const termSelect = document.getElementById(rigId + '_term_reason' + i);
+                let termReason = termSelect.value || "-";
+                if (termReason === "Other") {
+                    const otherVal = document.getElementById(rigId + '_other_term_text' + i).value.trim();
+                    if (otherVal) termReason = `Other (${otherVal})`;
+                }
+                termReasonText = ` | Reason: ${termReason}`;
+            }
+
+            text += `   👉 *Position:* ${pos} (${testType}) | Start: ${dateStarted}\n`;
+            text += `      • Probe: ${probeSerial} | Filter: ${filterType} | Sat: ${satMedium}\n`;
+            text += `      • Depth: ${prev}m -> ${curr}m (Adv: ${adv} / Target: ${target}m) | Dissipation: ${dissipation} min\n`;
+            text += `      • Status: ${status}${termReasonText}\n`;
+            if (comment) text += `      • Notes: ${comment}\n`;
+        }
+        text += `   ✔️ *Operations Done:* ${done}\n`;
+        text += `   🔜 *Next Plan:* ${next}\n`;
+        return text;
+    }
+
+    function generateReport() {
+        const projCode = document.getElementById('project_code').value || "PROJECT-CODE";
+        const projName = document.getElementById('project_name').value || "Project Name";
+        const dateStr = document.getElementById('date').value || "YYYY-MM-DD";
+        const weather = document.getElementById('weather').value || "-";
+        
+        const hasProblems = document.getElementById('has_problems').value;
+        const problemsText = document.getElementById('problems_text').value || "None";
+        const hasSafety = document.getElementById('has_safety').value;
+        const safetyText = document.getElementById('safety_text').value || "None";
+        const generalComments = document.getElementById('general_comments').value;
+
+        const isDrillingDone = document.getElementById('was_drilling_done').value === 'Yes';
+        const activeDrillCount = isDrillingDone ? (parseInt(document.getElementById('total_active_rigs').value) || 1) : 0;
+        
+        const isCPTuDone = document.getElementById('was_cptu_done').value === 'Yes';
+        const activeCPTuCount = isCPTuDone ? (parseInt(document.getElementById('total_active_cptu_rigs').value) || 1) : 0;
+
+        let report = `📋 *DAILY PROGRESS REPORT (DPR)* 📋\n`;
+        report += `*Project:* ${projName} (${projCode})\n`;
+        report += `*Date:* ${dateStr}\n`;
+        report += `*Weather:* ${weather}\n\n`;
+
+        report += `🚨 *PROBLEMS & SAFETY*\n`;
+        report += `• Problems: ${hasProblems === 'Yes' ? problemsText : 'No'}\n`;
+        report += `• Safety Incidents: ${hasSafety === 'Yes' ? safetyText : 'No'}\n\n`;
+
+        if (isDrillingDone) {
+            report += `⚙️ *DRILLING OPERATIONS (${activeDrillCount} Active Rigs)*\n`;
+            for (let r = 1; r <= activeDrillCount; r++) {
+                report += formatRig(`rig${r}`, `Rig ${r}`) + `\n`;
+            }
+        }
+
+        if (isCPTuDone) {
+            const cptuOp = document.getElementById('cptu_daily_op_time').value || "-";
+            const cptuInc = document.getElementById('cptu_daily_inclement').value || "-";
+            const cptuIncReason = document.getElementById('cptu_inc_reason').value;
+            const cptuStand = document.getElementById('cptu_daily_standing').value || "-";
+            const cptuStandReason = document.getElementById('cptu_stand_reason').value;
+            const cptuBreak = document.getElementById('cptu_daily_breakdown').value || "-";
+            const cptuBreakReason = document.getElementById('cptu_break_reason').value;
+            const cptuDown = document.getElementById('cptu_daily_downtime').value || "-";
+            const cptuDownReason = document.getElementById('cptu_down_reason').value;
+
+            const mostapPerformed = document.getElementById('mostap_performed').value;
+            const mostapPos = document.getElementById('mostap_position').value || "-";
+            const mostapCount = parseInt(document.getElementById('mostap_count').value) || 0;
+
+            report += `📊 *CPTu OPERATIONS (${activeCPTuCount} Active Rigs)*\n`;
+            report += `   ⏱️ *Operating Hours:* Op: ${cptuOp} | Inclement: ${cptuInc}${cptuIncReason ? ` (${cptuIncReason})` : ""} | Standing: ${cptuStand}${cptuStandReason ? ` (${cptuStandReason})` : ""} | Breakdown: ${cptuBreak}${cptuBreakReason ? ` (${cptuBreakReason})` : ""} | Downtime: ${cptuDown}${cptuDownReason ? ` (${cptuDownReason})` : ""}\n\n`;
+
+            if (mostapPerformed === 'Yes') {
+                report += `   🧪 *MOSTAP Sampling:* Position: ${mostapPos} | Total Samples: ${mostapCount}\n`;
+                for (let i = 1; i <= mostapCount; i++) {
+                    const sId = document.getElementById(`mostap_sample_id_${i}`)?.value || `-`;
+                    const sDia = document.getElementById(`mostap_sample_dia_${i}`)?.value || `-`;
+                    const wEmpty = document.getElementById(`mostap_weight_empty_${i}`)?.value || `-`;
+                    const wFull = document.getElementById(`mostap_weight_full_${i}`)?.value || `-`;
+                    const lRec = document.getElementById(`mostap_length_recovered_${i}`)?.value || `-`;
+                    report += `      • Sample #${i}: ID: ${sId} | Dia: ${sDia} | Empty: ${wEmpty}kg | Full: ${wFull}kg | Rec: ${lRec}m\n`;
+                }
+                report += `\n`;
+            }
+
+            for (let r = 1; r <= activeCPTuCount; r++) {
+                report += formatCPTuRig(`cptu_rig${r}`, `CPTu Rig ${r}`) + `\n`;
+            }
+        }
+
+        if (generalComments) {
+            report += `📝 *GENERAL NOTES*\n${generalComments}\n\n`;
+        }
+
+        report += `--- End of Report ---`;
+
+        document.getElementById('finalOutput').value = report;
+        document.getElementById('result-box').style.display = 'block';
+        document.getElementById('result-box').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyToClipboard() {
+        const textarea = document.getElementById('finalOutput');
+        textarea.select();
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            alert("📋 Report copied to clipboard!");
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+        });
+    }
+
+    function openWhatsAppDirect() {
+        const text = document.getElementById('finalOutput').value;
+        const encoded = encodeURIComponent(text);
+        window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+    }
+
+    function autofitColumns(ws) {
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const colWidths = [];
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            let maxLen = 10;
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+                if (cell && cell.v != null) {
+                    const len = cell.v.toString().length;
+                    if (len > maxLen) maxLen = len;
+                }
+            }
+            colWidths.push({ wch: Math.min(maxLen + 3, 40) });
+        }
+        ws['!cols'] = colWidths;
+    }
+
+    function downloadExcel() {
+        const projCode = document.getElementById('project_code').value || "PROJ";
+        const projName = document.getElementById('project_name').value || "DrillProj";
+        const dateStr = document.getElementById('date').value || "2026-08-17";
+        const isDrillingDone = document.getElementById('was_drilling_done').value === 'Yes';
+        const activeDrillCount = isDrillingDone ? (parseInt(document.getElementById('total_active_rigs').value) || 1) : 0;
+        const isCPTuDone = document.getElementById('was_cptu_done').value === 'Yes';
+        const activeCPTuCount = isCPTuDone ? (parseInt(document.getElementById('total_active_cptu_rigs').value) || 1) : 0;
+
+        const wb = XLSX.utils.book_new();
+
+        // 1. Dashboard Sheet Data
+        let totalMeters = 0;
+        if (isDrillingDone) {
+            for (let r = 1; r <= activeDrillCount; r++) {
+                const rigId = `rig${r}`;
+                const numPos = parseInt(document.getElementById(rigId + '_num_pos').value) || 1;
+                for (let i = 1; i <= numPos; i++) {
+                    const dFrom = parseFloat(document.getElementById(rigId + '_from' + i).value);
+                    const dTo = parseFloat(document.getElementById(rigId + '_to' + i).value);
+                    if (!isNaN(dFrom) && !isNaN(dTo) && dTo >= dFrom) {
+                        totalMeters += (dTo - dFrom);
+                    }
+                }
+            }
+        }
+
+        const dashData = [
+            ["DAILY PROGRESS REPORT - DASHBOARD"],
+            [],
+            ["Project Code", projCode],
+            ["Project Name", projName],
+            ["Report Date", dateStr],
+            ["Weather", document.getElementById('weather').value || "-"],
+            ["Drilling Done?", isDrillingDone ? "Yes" : "No"],
+            ["Total Active Drill Rigs", activeDrillCount],
+            ["Total Meters Drilled (m)", totalMeters.toFixed(2)],
+            ["CPTu Done?", isCPTuDone ? "Yes" : "No"],
+            ["Total Active CPTu Rigs", activeCPTuCount],
+            [],
+            ["Problems Encountered", document.getElementById('has_problems').value === 'Yes' ? document.getElementById('problems_text').value : "None"],
+            ["Safety Incidents", document.getElementById('has_safety').value === 'Yes' ? document.getElementById('safety_text').value : "None"],
+            ["General Comments", document.getElementById('general_comments').value || "None"]
+        ];
+        const wsDash = XLSX.utils.aoa_to_sheet(dashData);
+        autofitColumns(wsDash);
+        XLSX.utils.book_append_sheet(wb, wsDash, "Dashboard");
+
+        // 2. Drilling Operations Sheet (if performed)
+        if (isDrillingDone) {
+            const rigRows = [[
+                "Rig Name", "Operator", "Operational Time (hrs)", "Inclement Weather (hrs)", "Inclement Details", 
+                "Standing Time (hrs)", "Standing Details", "Breakdown Time (hrs)", "Breakdown Details", 
+                "Downtime (hrs)", "Downtime Details", "Position ID", "Status", "Drill Size", "Start Date", 
+                "Target Depth (m)", "Depth From (m)", "Depth To (m)", "Advance (m)", "Water Level Time", 
+                "Water Level Depth (m)", "Was Piezo Installed", "Piezo Depth (m)", "Core Boxes", 
+                "Was Concrete Block Made", "Position Comments", "Operations Done Today", "Plan for Next 24 Hours"
+            ]];
+
+            for (let r = 1; r <= activeDrillCount; r++) {
+                const rigId = `rig${r}`;
+                const rigName = document.getElementById(rigId + '_rignumber').value || `Rig ${r}`;
+                const operator = document.getElementById(rigId + '_operator').value || "-";
+                
+                const opTime = formatVal(document.getElementById(rigId + '_op_time').value) || "0.00";
+                const hasInclement = document.getElementById(rigId + '_has_inclement').value;
+                const inclementHrs = hasInclement === 'Yes' ? (formatVal(document.getElementById(rigId + '_inclement_hours').value) || "0.00") : "0.00";
+                const inclementText = hasInclement === 'Yes' ? (document.getElementById(rigId + '_inclement_text').value || "None") : "None";
+
+                const hasStanding = document.getElementById(rigId + '_has_standing').value;
+                const standingHrs = hasStanding === 'Yes' ? (formatVal(document.getElementById(rigId + '_standing_hours').value) || "0.00") : "0.00";
+                const standingText = hasStanding === 'Yes' ? (document.getElementById(rigId + '_standing_text').value || "None") : "None";
+
+                const hasBreakdown = document.getElementById(rigId + '_has_breakdown').value;
+                const breakdownHrs = hasBreakdown === 'Yes' ? (formatVal(document.getElementById(rigId + '_breakdown_hours').value) || "0.00") : "0.00";
+                const breakdownText = hasBreakdown === 'Yes' ? (document.getElementById(rigId + '_breakdown_text').value || "None") : "None";
+
+                const hasDowntime = document.getElementById(rigId + '_has_downtime').value;
+                const downtimeHrs = hasDowntime === 'Yes' ? (formatVal(document.getElementById(rigId + '_downtime_hours').value) || "0.00") : "0.00";
+                const downtimeText = hasDowntime === 'Yes' ? (document.getElementById(rigId + '_downtime_text').value || "None") : "None";
+
+                const numPos = parseInt(document.getElementById(rigId + '_num_pos').value) || 1;
+                const operationsDone = document.getElementById(rigId + '_done').value || "-";
+                const nextPlan = document.getElementById(rigId + '_next').value || "-";
+
+                for (let i = 1; i <= numPos; i++) {
+                    const posID = document.getElementById(rigId + '_pos' + i).value || "-";
+                    const status = document.getElementById(rigId + '_status' + i).value || "-";
+                    
+                    let drillSize = document.getElementById(rigId + '_drillsize' + i).value || "-";
+                    if (drillSize === 'Other') {
+                        const otherSize = document.getElementById(rigId + '_other_drill' + i).value || 'Other';
+                        drillSize = `Other (${otherSize})`;
+                    }
+
+                    const startDate = document.getElementById(rigId + '_startdate' + i).value || "-";
+                    const target = formatVal(document.getElementById(rigId + '_target' + i).value) || "-";
+                    const dFrom = formatVal(document.getElementById(rigId + '_from' + i).value) || "-";
+                    const dTo = formatVal(document.getElementById(rigId + '_to' + i).value) || "-";
+                    let adv = "-";
+                    if (dFrom !== "-" && dTo !== "-") {
+                        adv = (parseFloat(dTo) - parseFloat(dFrom)).toFixed(2);
+                    }
+                    const waterTime = document.getElementById(rigId + '_watertime' + i).value || "-";
+                    const waterDepth = formatVal(document.getElementById(rigId + '_waterdepth' + i).value) || "-";
+                    const piezo = document.getElementById(rigId + '_piezo' + i).value || "-";
+                    const piezoDepth = piezo === 'Yes' ? (formatVal(document.getElementById(rigId + '_piezo_depth' + i).value) || "-") : "-";
+                    const coreBoxes = document.getElementById(rigId + '_coreboxes' + i).value || "0";
+                    const concrete = status === 'Complete' ? (document.getElementById(rigId + '_concrete' + i).value || "-") : "-";
+                    const comment = document.getElementById(rigId + '_pos_comment' + i).value || "-";
+
+                    rigRows.push([
+                        rigName, operator, opTime, inclementHrs, inclementText, standingHrs, standingText,
+                        breakdownHrs, breakdownText, downtimeHrs, downtimeText, posID, status, drillSize, 
+                        startDate, target, dFrom, dTo, adv, waterTime, waterDepth, piezo, piezoDepth, 
+                        coreBoxes, concrete, comment, operationsDone, nextPlan
+                    ]);
+                }
+            }
+            const wsDrill = XLSX.utils.aoa_to_sheet(rigRows);
+            autofitColumns(wsDrill);
+            XLSX.utils.book_append_sheet(wb, wsDrill, "Drilling Operations");
+        }
+
+        // 3. CPTu Operations Sheet (if performed)
+        if (isCPTuDone) {
+            const cptuRigRows = [[
+                "Rig Name", "Operator Name", "Start Time", "Stop Time", "Position ID", "Date Started", 
+                "Test Type", "Probe Serial No.", "Filter Type", "Saturation Medium", "Target Depth (m)", 
+                "Prev Depth (m)", "Curr Depth (m)", "Advance (m)", "Dissipation Duration (min)", "Status", 
+                "Termination Reason", "Position Comments", "Operations Done", "Plan for Next 24h"
+            ]];
+
+            for (let r = 1; r <= activeCPTuCount; r++) {
+                const prefix = 'cptu_rig' + r;
+                const rigName = document.getElementById(prefix + '_name').value.trim() || `CPTu Rig ${r}`;
+                const operator = document.getElementById(prefix + '_operator').value.trim() || "-";
+                const startTime = document.getElementById(prefix + '_start_time').value || "-";
+                const stopTime = document.getElementById(prefix + '_stop_time').value || "-";
+                const numPos = parseInt(document.getElementById(prefix + '_num_pos').value) || 1;
+                const doneText = document.getElementById(prefix + '_done').value || "-";
+                const nextText = document.getElementById(prefix + '_next').value || "-";
+
+                for (let i = 1; i <= numPos; i++) {
+                    const pos = document.getElementById(prefix + '_pos' + i).value || "-";
+                    const dateStarted = document.getElementById(prefix + '_date_started' + i).value || "-";
+                    const testType = document.getElementById(prefix + '_testtype' + i).value || "-";
+                    const probeSerial = document.getElementById(prefix + '_probeserial' + i).value || "-";
+                    const filterType = document.getElementById(prefix + '_filtertype' + i).value || "-";
+                    const satMedium = document.getElementById(prefix + '_satmedium' + i).value || "-";
+                    const target = document.getElementById(prefix + '_target' + i).value || "-";
+                    const prev = document.getElementById(prefix + '_prev' + i).value || "-";
+                    const curr = document.getElementById(prefix + '_curr' + i).value || "-";
+                    const dissipation = document.getElementById(prefix + '_dissipation' + i).value || "-";
+                    const posComment = document.getElementById(prefix + '_pos_comment' + i).value || "-";
+                    let adv = "-";
+                    if (prev !== "-" && curr !== "-") {
+                        adv = (parseFloat(curr) - parseFloat(prev)).toFixed(1);
+                    }
+                    const status = document.getElementById(prefix + '_status' + i).value || "-";
+                    let termReason = document.getElementById(prefix + '_term_reason' + i).value || "-";
+                    if (termReason === "Other") {
+                        const otherVal = document.getElementById(prefix + '_other_term_text' + i).value.trim();
+                        if (otherVal) termReason = `Other (${otherVal})`;
+                    }
+
+                    cptuRigRows.push([rigName, operator, startTime, stopTime, pos, dateStarted, testType, probeSerial, filterType, satMedium, target, prev, curr, adv, dissipation, status, termReason, posComment, doneText, nextText]);
+                }
+            }
+            const wsCPTu = XLSX.utils.aoa_to_sheet(cptuRigRows);
+            autofitColumns(wsCPTu);
+            XLSX.utils.book_append_sheet(wb, wsCPTu, "CPTu Operations");
+
+            // MOSTAP Sampling sheet
+            if (document.getElementById('mostap_performed').value === 'Yes') {
+                let mostapRows = [
+                    ["Position / Location", "Sample Number", "Sample ID", "Sample Diameter", "Weight Empty (kg)", "Weight Full (kg)", "Length Recovered (m)"]
+                ];
+                const mPos = document.getElementById('mostap_position').value.trim() || "-";
+                const mCount = parseInt(document.getElementById('mostap_count').value) || 0;
+                for (let i = 1; i <= mCount; i++) {
+                    const sId = document.getElementById(`mostap_sample_id_${i}`)?.value.trim() || "-";
+                    const sDia = document.getElementById(`mostap_sample_dia_${i}`)?.value || "-";
+                    const wEmpty = document.getElementById(`mostap_weight_empty_${i}`)?.value || "-";
+                    const wFull = document.getElementById(`mostap_weight_full_${i}`)?.value || "-";
+                    const lRec = document.getElementById(`mostap_length_recovered_${i}`)?.value || "-";
+                    mostapRows.push([mPos, `Sample #${i}`, sId, sDia, wEmpty, wFull, lRec]);
+                }
+                const wsMostap = XLSX.utils.aoa_to_sheet(mostapRows);
+                autofitColumns(wsMostap);
+                XLSX.utils.book_append_sheet(wb, wsMostap, "MOSTAP Sampling");
+            }
+        }
+
+        XLSX.writeFile(wb, `${projCode}-${projName}-Field-DPR-${dateStr}.xlsx`);
+    }
+
+    window.onload = function() {
+        loadDraft();
+    };
+</script>
+
+</body>
+</html>
